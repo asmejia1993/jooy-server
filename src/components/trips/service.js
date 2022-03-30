@@ -1,23 +1,28 @@
 import { ValidationError } from "../../shared/error/validationError";
 import { Trip, Reading } from "./model";
 import NodeGeoCoder from "node-geocoder";
-import { calculeDistance } from "../../shared/functions/calculeDistance";
 import { httpStatusCode } from "../../shared/error/httpStatusCode";
 import QueryParamsTrip from "./request";
+import mapboxgl from "mapbox-gl";
+import { buildPagination } from "../../shared/functions/builPagination";
+import { config } from "dotenv";
+
+config();
 
 const options = {
     provider: "opencage",
-    apiKey: "db0720a89fec40669cb5cc4891dc37f7", // for Mapquest, OpenCage, Google Premier
+    apiKey: process.env.API_KEY_OPENCAGE, // for Mapquest, OpenCage, Google Premier
 };
+
+mapboxgl.accessToken = process.env.API_KEY_MAPBOX;
 
 /**
  * Save a new Trip
- * 
+ *
  * @param {@link Reading} @link Reading
  * @returns Trip
  */
 export const saveTrip = async (readings) => {
-
     //Filter before to save a Trip
     if (readings.length < 5)
         throw new ValidationError(
@@ -63,16 +68,35 @@ export const saveTrip = async (readings) => {
         lon: readingMaxTime.location.lon,
         address: `${addressFromMaxReading[0].streetName} ${addressFromMaxReading[0].streetNumber}`,
     };
+    const limitMin = new mapboxgl.LngLat(start.lon, start.lat);
+    const limitMax = new mapboxgl.LngLat(end.lon, end.lat);
+    const bounding = new mapboxgl.LngLatBounds(limitMin, limitMax);
+    let boundingBox = [];
+    boundingBox.push({
+        lat: bounding.getNorthEast().lat,
+        lon: bounding.getNorthEast().lng,
+    });
+    boundingBox.push({
+        lat: bounding.getNorthWest().lat,
+        lon: bounding.getNorthWest().lng,
+    });
+    boundingBox.push({
+        lat: bounding.getSouthEast().lat,
+        lon: bounding.getSouthEast().lng,
+    });
+    boundingBox.push({
+        lat: bounding.getSouthWest().lat,
+        lon: bounding.getSouthWest().lng,
+    });
 
     //Save a new Trip
     const trip = new Trip({
         start,
         end,
-        distance: (
-            await calculeDistance(start.lat, start.lon, end.lat, end.lon)
-        ).toFixed(2),
+        distance: (limitMin.distanceTo(limitMax) / 1000).toFixed(2),
         duration: 3600, //After check out How to calcule it
         overspeedsCount: 1,
+        boundingBox,
     });
     const tripCreated = await trip.save();
 
@@ -85,25 +109,34 @@ export const saveTrip = async (readings) => {
     });
 
     await Reading.insertMany(readingsByTrip);
-    return trip;
+    return tripCreated;
 };
-
 
 /**
- * 
- * @param {*} params 
+ *
+ * @param {*} params
  */
-export const findAllTrips = async(params) => {
-    const filters = new QueryParamsTrip()
-                        .setStartGte(params.start_gte)
-                        .setStartLte(params.start_lte)
-                        .setdistanceGte(params.distance_gte)
-                        .setLimit(params.limit)
-                        .setOffset(params.offset)
-                        .build();
+export const findAllTrips = async (params) => {
+    try {
+        const filters = new QueryParamsTrip()
+            .setStartGte(+params.start_gte)
+            .setStartLte(+params.start_lte)
+            .setdistanceGte(+params.distance_gte)
+            .setLimit(+params.limit)
+            .setOffset(+params.offset)
+            .build();
 
-    //TO DO: Apply every single filter and getting the data 
-    
+        //TO DO: Apply every single filter and getting the data
+        const { offset } = await buildPagination(filters.limit, filters.offset);
+        const trips = await Trip.find().skip(offset).limit(filters.limit);
+        const size = await Trip.find().count() ;
+        return {
+            totalPages: Math.ceil(size / filters.limit),
+            pageNumber: filters.offset !== 0 ? filters.offset : 1,
+            pageSize: size,
+            trips,
+        };
+    } catch (error) {
+        console.error(error);
+    }
 };
-
-

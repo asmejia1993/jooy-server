@@ -15,7 +15,18 @@ const readingSchema = Schema(
   {
     versionKey: false,
   }
-);
+  );
+  
+  const boundingSchema = Schema(
+    {
+      lat: Number,
+      lon: Number
+    },
+    {
+      _id: false,
+      versionKey: false,
+    }
+  );
 
 const tripSchema = Schema(
   {
@@ -36,6 +47,7 @@ const tripSchema = Schema(
     distance: Number,
     duration: Number,
     overspeedsCount: Number,
+    boundingBox: [boundingSchema],
   },
   {
     versionKey: false,

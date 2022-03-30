@@ -17,12 +17,16 @@ export const createTrip = async(req, res) => {
 
 export const retrieveTrips = async(req, res) => {
     try {
-        const data = await findAllTrips(req.query);
+        const { pageNumber, pageSize, totalPages, trips} = await findAllTrips(req.query);
         res.status(200).send({
             description: 'Success',
-            trips: data
+            totalPages,
+            pageNumber,
+            pageSize,
+            trips
         });
     } catch (error) {
+        console.error(error);
         res.status(400).send({
            error
         });
