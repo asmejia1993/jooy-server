@@ -1,6 +1,5 @@
 import express from "express";
 import morgan from "morgan";
-import bodyParser from "body-parser";
 import { config }  from "dotenv";
 import tripRoutes from "./components/trips/routes";
 

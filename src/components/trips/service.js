@@ -6,6 +6,7 @@ import QueryParamsTrip from "./request";
 import mapboxgl from "mapbox-gl";
 import { buildPagination } from "../../shared/functions/builPagination";
 import { config } from "dotenv";
+import { validateReadings } from "./validator";
 
 config();
 
@@ -24,25 +25,7 @@ mapboxgl.accessToken = process.env.API_KEY_MAPBOX;
  */
 export const saveTrip = async (readings) => {
     //Filter before to save a Trip
-    if (readings.length < 5)
-        throw new ValidationError(
-            "Given attributes are invalid for requested action",
-            httpStatusCode.BAD_REQUEST,
-            0,
-            "Invalid range the readings",
-            "Longitud menor a 5"
-        );
-    readings.filter((r) => {
-        if (!r.time || r.time === null) {
-            throw new ValidationError(
-                "Given attributes are invalid for requested action",
-                httpStatusCode.BAD_REQUEST,
-                0,
-                "Invalid time attribute",
-                "Atributo time viene vacio"
-            );
-        }
-    });
+    validateReadings(readings);
 
     //Prepare data to save a new Trip
     const readingMinTime = readings.sort((a, b) => a.time - b.time)[0];
@@ -113,7 +96,7 @@ export const saveTrip = async (readings) => {
 };
 
 /**
- *
+ *Retrieve all trips
  * @param {*} params
  */
 export const findAllTrips = async (params) => {
