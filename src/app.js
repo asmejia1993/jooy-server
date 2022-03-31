@@ -1,5 +1,6 @@
 import express from "express";
 import morgan from "morgan";
+import bodyParser from "body-parser";
 import { config }  from "dotenv";
 import tripRoutes from "./components/trips/routes";
 
@@ -12,8 +13,8 @@ app.set("port", process.env.PORT)
 
 //middleawres
 app.use(morgan('dev'));
-app.use(express.urlencoded({extended: false}));
 app.use(express.json());
+app.use(express.urlencoded({extended: false}));
 
 
 //routes

@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  server:
+    container_name: jooy-server
+    restart: always
+    env_file:
+        - .env
+    environment: 
+        - MONGO_HOST=mongodb://mongo/jooy-db
+    build: .
+    ports:
+      - "3000:3000"
+    links:
+      - mongo
+    volumes: 
+      - .:/usr/src/app
+  mongo:
+    container_name: mongodb
+    image: mongo
+    ports:
+      - "27018:27017"

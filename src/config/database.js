@@ -1,14 +1,19 @@
 import { connect } from "mongoose";
-import { config }  from "dotenv";
+import { config } from "dotenv";
 
 config();
 
 //connection to database
-(async () => {
-  try {
-    const db = await connect(process.env.MONGO_HOST);
+connect(process.env.MONGO_HOST, {useNewUrlParser: true, useUnifiedTopology: true})
+  .then((db) => {
     console.log("DB connected to ", db.connection.name);
-  } catch (e) {
+  })
+  .catch((e) => {
     console.error(e);
-  }
-})();
+  });
+
+
+
+
+
+

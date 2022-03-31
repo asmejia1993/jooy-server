@@ -19,7 +19,7 @@ mapboxgl.accessToken = process.env.API_KEY_MAPBOX;
 /**
  * Save a new Trip
  *
- * @param {@link Reading} @link Reading
+ * @param {Reading} reading
  * @returns Trip
  */
 export const saveTrip = async (readings) => {
