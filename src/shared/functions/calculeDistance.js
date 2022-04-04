@@ -15,3 +15,8 @@ export const calculeDistance = async (lat1, lon1, lat2, lon2) => {
 const deg2rad = (deg) => {
   return deg * (Math.PI / 180);
 };
+
+export const calculeTimeInMinutes = (startTime, endTime) => {
+  const difference = endTime - startTime;
+  return (difference / 1000) / 60;
+};

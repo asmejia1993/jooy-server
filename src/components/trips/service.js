@@ -7,6 +7,10 @@ import mapboxgl from "mapbox-gl";
 import { buildPagination } from "../../shared/functions/builPagination";
 import { config } from "dotenv";
 import { validateReadings } from "./validator";
+import {
+    calculeTimeInMiliseconds,
+    calculeTimeInMinutes,
+} from "../../shared/functions/calculeDistance";
 
 config();
 
@@ -77,7 +81,7 @@ export const saveTrip = async (readings) => {
         start,
         end,
         distance: (limitMin.distanceTo(limitMax) / 1000).toFixed(2),
-        duration: 3600, //After check out How to calcule it
+        duration: calculeTimeInMinutes(start.time, end.time), //After check out How to calcule it
         overspeedsCount: 1,
         boundingBox,
     });
@@ -111,8 +115,23 @@ export const findAllTrips = async (params) => {
 
         //TO DO: Apply every single filter and getting the data
         const { offset } = await buildPagination(filters.limit, filters.offset);
-        const trips = await Trip.find().skip(offset).limit(filters.limit);
-        const size = await Trip.find().count() ;
+
+        let querys = {};
+        if (filters.distanceGte !== 0.05) {
+            querys.distance = filters.distanceGte;
+        }
+        if (filters.startLte !== 0) {
+            querys['start.time'] = filters.startLte;
+        }
+        if (filters.startGte !== 0) {
+            querys['end.time'] = filters.startGte;
+        }
+        console.log(querys);
+        const trips = await Trip.find(querys)
+                                .skip(offset)
+                                .limit(filters.limit)
+            
+        const size = await Trip.find().count();
         return {
             totalPages: Math.ceil(size / filters.limit),
             pageNumber: filters.offset !== 0 ? filters.offset : 1,
